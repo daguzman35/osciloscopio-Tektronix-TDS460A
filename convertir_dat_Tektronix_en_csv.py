@@ -12,15 +12,25 @@ Los archivos generados tienen 3 columnas: número de dato, tiempo [s], voltaje [
 Se almacenan en carpeta /csv_creados/
 
 Probado correctamente 2023-12-07, 5:38pm.
+
+2023-12-09: crea csv tanto en formato inglés como europeo.
 """
 
 import pandas as pd
 import os #para crear directorio
 import glob #para buscar archivos en este directorio
 
+##Seleccione si desea generar archivos con formato europeo (pi;3,14) o inglés (pi,3.14)
+generar_salida_europea = True
+generar_salida_inglesa = True
+
+
+########
 ##Parámetros para archivo de salida
-salida_separador_cols = ";"
-salida_separador_decimal = ","
+separador_cols_eu = ";" #european
+separador_decimal_eu = "," #european
+separador_cols_en = "," #english
+separador_decimal_en = "." #english
 
 def convierte_archivo(nombre_archivo):
     #extrae todos los datos de voltajes iniciando en fila 4 (header=3). Lo guarda como dataframe de Pandas
@@ -41,17 +51,26 @@ def convierte_archivo(nombre_archivo):
     #construye ruta y crea directorio para nuevo archivo
     posicion_punto_archivo = nombre_archivo.rfind(".") #busca última ocurrencia de '.' en la ruta dada
     posicion_separador_directorio = nombre_archivo.rfind("\\") #busca última ocurrencia de '\' en la ruta dada
+    
     ruta_directorio = nombre_archivo[:posicion_separador_directorio] #obtiene ruta hasta antes del directorio final
-    ruta_directorio = ruta_directorio + "/csv_creados/" #agrega subcarpeta
+    nombre_archivo_csv = nombre_archivo[posicion_separador_directorio:posicion_punto_archivo]+".csv" #agrega nombre original quitando ".xxxx", agregando ".csv"
+    
+    if generar_salida_inglesa:
+        #si pide generar archivo en formato inglés (UK, US)
+        genera_archivo(ruta_directorio + "/csv_creados_en/",nombre_archivo_csv,datos_tiempo_voltaje,separador_cols_en,separador_decimal_en)
+        
+    if generar_salida_europea:
+        #si pide generar archivo en formato europeo
+        genera_archivo(ruta_directorio + "/csv_creados_eu/",nombre_archivo_csv,datos_tiempo_voltaje,separador_cols_eu,separador_decimal_eu)
+
+    
+def genera_archivo(ruta_directorio, nombre_archivo_csv, datos, separador_cols, separador_decimal):
     os.makedirs(ruta_directorio, exist_ok=True) #crea directorio, si no existe
-    ruta_csv = ruta_directorio + nombre_archivo[posicion_separador_directorio:posicion_punto_archivo]+".csv" #agrega nombre original quitando ".xxxx", agregando ".csv"
-    
-    #genera nuevo archivo de datos
-    datos_tiempo_voltaje.to_csv(ruta_csv,sep=salida_separador_cols,decimal=salida_separador_decimal)
-    
+    ruta_csv = ruta_directorio + nombre_archivo_csv #construye ruta completa
+    datos.to_csv(ruta_csv,sep=separador_cols,decimal=separador_decimal) #genera nuevo archivo de datos
 
 
-#archivos_en_este_directorio = filter(os.path.isfile, os.listdir( os.curdir ) )  # files only
+####Rutina principal (MAIN)
 archivos_dat_en_este_directorio = glob.glob('./*.dat') #busca archivos con extensión .DAT en directorio actual
 
 for a in archivos_dat_en_este_directorio:
